@@ -528,7 +528,8 @@ class PagerDuty(object):
         "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
 
     def __init__(self, subdomain, api_token, timeout=10, max_403_retries=0,
-                 page_size=25, proxies=None, parse_datetime=False):
+                 page_size=25, proxies=None, parse_datetime=False,
+                 cookies=None):
 
         self.api_token = api_token
         self.subdomain = subdomain
@@ -546,6 +547,7 @@ class PagerDuty(object):
         if proxies:
             handlers.append(urllib.request.ProxyHandler(proxies))
         self.opener = urllib.request.build_opener(*handlers)
+        self.cookies = cookies
 
         # Collections
         self.incidents = Incidents(self)
@@ -664,12 +666,17 @@ class PagerDuty(object):
 
     def request(self, method, path, query_params=None, data=None,
                 extra_headers=None):
-
-        auth = "Token token={0}".format(self.api_token)
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": auth
-        }
+        
+        headers = {"Content-Type": "application/json"}
+        
+        if self.cookies:
+            headers['Cookie'] = self.cookies
+        else:
+            auth = "Token token={0}".format(self.api_token)
+            headers = {
+                "Content-type": "application/json",
+                "Authorization": auth
+            }
 
         if extra_headers:
             headers.update(extra_headers)
